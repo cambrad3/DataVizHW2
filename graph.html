@@ -198,12 +198,6 @@ links.forEach(function(link) {
 links.forEach(function(link){
   nodes[link.source.name]["weight"] = nodes[link.source.name]["weight"] + link.value || link.value
   nodes[link.target.name]["weight"] = nodes[link.target.name]["weight"] + link.value || link.value
-  nodes[link.source.name]["clicked"] = 0
-  nodes[link.target.name]["clicked"] = 
-  nodes[link.source.name]["positionx"] = 0
-  nodes[link.target.name]["positionx"] = 0
-  nodes[link.source.name]["positiony"] = 0
-  nodes[link.target.name]["positiony"] = 0
 });
 
 
@@ -243,6 +237,56 @@ var path = svg.append("g")
   if(d.value == 1) {return 5}
 });
 
+
+function clickcancel() {
+  var dispatcher = d3.dispatch('click', 'dblclick');
+  function cc(selection) {
+      var down, tolerance = 5, last, wait = null, args;
+      function dist(a, b) {
+          return Math.sqrt(Math.pow(a[0] - b[0], 2), Math.pow(a[1] - b[1], 2));
+      }
+      selection.on('mousedown', function() {
+          down = d3.mouse(document.body);
+          last = +new Date();
+          args = arguments;
+      });
+      selection.on('mouseup', function() {
+          if (dist(down, d3.mouse(document.body)) > tolerance) {
+              return;
+          } else {
+              if (wait) {
+                  window.clearTimeout(wait);
+                  wait = null;
+                  dispatcher.apply("dblclick", this, args);
+              } else {
+                  wait = window.setTimeout((function() {
+                      return function() {
+                          dispatcher.apply("click", this, args);
+                          wait = null;
+                      };
+                  })(), 300);
+              }
+          }
+      });
+  };
+  var d3rebind = function(target, source) {
+    var i = 1, n = arguments.length, method;
+    while (++i < n) target[method = arguments[i]] = d3_rebind(target, source, source[method]);
+    return target;
+  };
+
+  function d3_rebind(target, source, method) {
+    return function() {
+      var value = method.apply(source, arguments);
+      return value === source ? target : value;
+    };
+  }
+  return d3rebind(cc, dispatcher, 'on');
+}
+
+
+var clickity = clickcancel()
+
 // define the nodes
 var node = svg.selectAll(".node")
     .data(force.nodes())
@@ -253,6 +297,8 @@ var node = svg.selectAll(".node")
       .on("drag", dragged)
       .on("end", dragended)
       );
+  
+
 
 var weights = []
 
@@ -273,6 +319,7 @@ var colorScale = d3.scaleLinear()
                 .range([210,75]);
 
 
+
 // add the nodes
 node.append("circle")
     .attr("r", function(d){
@@ -280,6 +327,16 @@ node.append("circle")
     })
     .style("fill", function(d){
       return "rgb(255,"+colorScale(d.weight)+",0)"
+    })
+    .on("dblclick",function(d){
+      d3.select(this).style("stroke","blue")
+      d3.select(this).style("stroke-width",5)
+      d3.select(this).classed("fixed", d.fixed=true)
+    })
+    .on("click",function(d){
+      d3.select(this).style("stroke","black")
+      d3.select(this).style("stroke-width",1.5)
+      d3.select(this).classed("fixed", d.fixed=false)
     });
 
 
@@ -290,8 +347,7 @@ node.append("text")
     .text(function(d){return d.name})
     ;
 
-//click functionality
-/*function dblclick(d) { if(!d.fixed) { d3.select(this).classed("fixed", d.fixed=true).style("stroke","pink");} else if(d.fixed) { d3.select(this).classed("fixed", d.fixed=false).style("stroke","none"); } }*/
+
 
 
 // add the curvy lines
@@ -341,3 +397,5 @@ function dragended(d) {
 </script>
 </body>
 </html>
+
+
