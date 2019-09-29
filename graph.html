@@ -238,54 +238,6 @@ var path = svg.append("g")
 });
 
 
-function clickcancel() {
-  var dispatcher = d3.dispatch('click', 'dblclick');
-  function cc(selection) {
-      var down, tolerance = 5, last, wait = null, args;
-      function dist(a, b) {
-          return Math.sqrt(Math.pow(a[0] - b[0], 2), Math.pow(a[1] - b[1], 2));
-      }
-      selection.on('mousedown', function() {
-          down = d3.mouse(document.body);
-          last = +new Date();
-          args = arguments;
-      });
-      selection.on('mouseup', function() {
-          if (dist(down, d3.mouse(document.body)) > tolerance) {
-              return;
-          } else {
-              if (wait) {
-                  window.clearTimeout(wait);
-                  wait = null;
-                  dispatcher.apply("dblclick", this, args);
-              } else {
-                  wait = window.setTimeout((function() {
-                      return function() {
-                          dispatcher.apply("click", this, args);
-                          wait = null;
-                      };
-                  })(), 300);
-              }
-          }
-      });
-  };
-  var d3rebind = function(target, source) {
-    var i = 1, n = arguments.length, method;
-    while (++i < n) target[method = arguments[i]] = d3_rebind(target, source, source[method]);
-    return target;
-  };
-
-  function d3_rebind(target, source, method) {
-    return function() {
-      var value = method.apply(source, arguments);
-      return value === source ? target : value;
-    };
-  }
-  return d3rebind(cc, dispatcher, 'on');
-}
-
-
-var clickity = clickcancel()
 
 // define the nodes
 var node = svg.selectAll(".node")
