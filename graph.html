@@ -281,14 +281,19 @@ node.append("circle")
       return "rgb(255,"+colorScale(d.weight)+",0)"
     })
     .on("dblclick",function(d){
-      d3.select(this).style("stroke","blue")
-      d3.select(this).style("stroke-width",5)
-      d3.select(this).classed("fixed", d.fixed=true)
-    })
-    .on("click",function(d){
+      if(d.fixed==true){
+      d.fx = null;
+      d.fy = null;
       d3.select(this).style("stroke","black")
       d3.select(this).style("stroke-width",1.5)
-      d3.select(this).classed("fixed", d.fixed=false)
+
+    } else {
+      d.fx = d.x;
+      d.fy = d.y;
+      d3.select(this).style("stroke","blue")
+      d3.select(this).style("stroke-width",5)      
+    }
+      d.fixed=!d.fixed
     });
 
 
