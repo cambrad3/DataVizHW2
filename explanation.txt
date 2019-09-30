@@ -1,0 +1,3 @@
+We will want to use nonlinear scales, such as square root and log, to visualize data that spans 
+a large domain (e.g some data is single digits while others are above 1000). Also nonlinear 
+scales are good when x and y are nonlinearly related.
