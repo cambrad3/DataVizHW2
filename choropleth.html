@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Choropleth Map of State Data</title>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/d3-tip.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <style type="text/css">
+
+        .state {
+          fill: none;
+          stroke: black;
+          stroke-linejoin: round;
+        }
+
+        </style>
+    </head>
+    <body>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/d3-tip.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <script type="text/javascript">
+
+        //Create svg
+
+        var svg = d3.select("body")
+                    .append("svg")
+                    .attr("width",1500)
+                    .attr("height",1000)
+                    .attr("x",0)
+                    .attr("y",0);
+
+        //Create projection and paths for US map
+
+        var project = d3.geoAlbersUsa();
+        var path = d3.geoPath()
+                     .projection(project);
+
+        //Create maps
+        
+        var earthquake = d3.map();
+        var region = d3.map();
+
+
+        //Create promise array with data
+
+        var promise = [d3.json("states-10m.json"),
+                       d3.dsv(",","state-earthquakes.csv", function(d){
+                        earthquake.set(d.States, +d["Total Earthquakes"])
+                        region.set(d.States, d["Region"])
+                       }), ]
+
+
+        Promise.all(promise).then(enterdata)
+
+        function enterdata([merica]) {
+
+          var numbers = []
+
+          max = d3.max(topojson.feature(merica, merica.objects.states).features, function(d) {
+                            d.values = earthquake.get(d.properties.name)
+                            if(d.values != undefined){
+                              numbers.push(+d.values)
+                            }
+                            return d.values ;
+                          });
+
+
+          function sortNumber(a,b){
+            return a-b;
+          };
+
+          numbers.sort(sortNumber);
+
+
+          var gradientmap = d3.scaleLinear()
+                   .domain([0, Math.log(max)])
+                   .range(["#E6E6FA", "#9400D3"]); 
+
+
+          svg.append("g")
+             .attr("class", "state")
+             .selectAll("path")
+             .data(topojson.feature(merica, merica.objects.states).features)
+             .enter()
+             .append("path")
+             .attr("fill", function(d){
+                d.initvalues = earthquake.get(d.properties.name)
+                if (d.initvalues < 1 || d.initvalues === undefined) {
+                    d.value = 1;
+                } else {
+                    d.value = Math.log(d.initvalues)
+                }
+                return gradientmap(d.value)
+            })
+            .attr("d", path)
+            .append("title")
+            .text(function(d) {
+              d.region = region.get(d.properties.name)
+              d.value = earthquake.get(d.properties.name);
+              return "State: "+d.properties.name+"\n"+"Region: "+d.region+"\n"+ "Earthquakes: "+d.value
+            })
+            .on('mouseover');
+            
+
+
+        //Create legend colorscale
+        var gradient = d3.scaleLinear()
+                         .domain([0, 9])
+                         .range(["#E6E6FA", "#9400D3"]);
+
+
+        //Create legend
+        //Create gradient legend colors
+
+        var gradient1 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient1")
+                           .append("stop")
+                           .attr("offset", "0%")
+                           .attr("stop-color", gradient(1));
+
+        var gradient2 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient2").append("stop")
+                           .attr("offset", "11%")
+                           .attr("stop-color", gradient(2));
+                                 
+        var gradient3 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient3")
+                           .append("stop")
+                           .attr("offset", "22%")
+                           .attr("stop-color", gradient(3));
+
+        var gradient4 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient4")
+                           .append("stop")
+                           .attr("offset", "33%")
+                           .attr("stop-color", gradient(4));
+
+        var gradient5 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient5")
+                           .append("stop")
+                           .attr("offset", "44%")
+                           .attr("stop-color", gradient(5));
+                                 
+        var gradient6 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient6")
+                           .append("stop")
+                           .attr("offset", "55%")
+                           .attr("stop-color", gradient(6));
+
+        var gradient7 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient7").append("stop")
+                           .attr("offset", "66%")
+                           .attr("stop-color", gradient(7));
+
+        var gradient8 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient8").append("stop")
+                           .attr("offset", "77%")
+                           .attr("stop-color", gradient(8));
+
+        var gradient9 = svg.append("defs")
+                           .append("linearGradient")
+                           .attr("id", "lingradient9")
+                           .append("stop")
+                           .attr("offset", "100%")
+                           .attr("stop-color", gradient(9));
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient1)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*1+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient2)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*2+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient3)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*3+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient4)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*4+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient5)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*5+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient6)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*6+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient7)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*7+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient8)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("rect")
+            .attr("x", 900)
+            .attr("y",250+20*8+3)
+            .attr("width",20)
+            .attr("height",20)
+            .style("fill", "url(#lingradient9)")
+            .style("stroke","black")
+            .style("stroke-width",".5px");
+
+        svg.append("text")
+            .attr("x", 900)
+            .attr("y",235)
+            .text("Earthquake Frequency")
+            .style("font-weight","bold");
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y", 260)
+           .text("0");
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*1)
+           .text(Math.round(d3.quantile(numbers,.11)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*2)
+           .text(Math.round(d3.quantile(numbers,.22)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*3)
+           .text(Math.round(d3.quantile(numbers,.33)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*4)
+           .text(Math.round(d3.quantile(numbers,.44)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*5)
+           .text(Math.round(d3.quantile(numbers,.55)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*6)
+           .text(Math.round(d3.quantile(numbers,.66)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*7)
+           .text(Math.round(d3.quantile(numbers,.77)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*8)
+           .text(Math.round(d3.quantile(numbers,.88)))
+
+        svg.append("text")
+           .attr("x", 930)
+           .attr("y",260+20*9)
+           .text(Math.round(d3.quantile(numbers,1)))
+
+
+        }
+
+
+    </script>   
+    </body>
+</html>
