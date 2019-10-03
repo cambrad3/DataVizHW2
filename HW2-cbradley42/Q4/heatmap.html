@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Visualizing Earthquake Counts by State 20104515 (M3+)</title>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <style>
+               .verttext{
+               	color: black;
+                text-anchor: middle;
+            }
+    	</style>
+ 	</head>
+    <body>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <script type="text/javascript">
+
+        //Create svg
+
+        var svg = d3.select("body")
+          	        .append("svg")
+          	        .attr("width",1000)
+          	        .attr("height",500)
+          	        .attr("x",0)
+          	        .attr("y",0);
+
+       //Title
+
+        svg.append("text")
+            .attr("x",500)
+            .attr("y",15)
+            .attr("text-anchor","middle")
+            .text("Visualizing Earthquake Counts by State 20104515 (M3+)");      
+
+ 		//Import data and make category list
+
+		d3.dsv(",","earthquakes.csv")
+		.then(function(data){
+		  
+		 	var datalist = [];
+		 	var categories = [];
+		  	data.forEach( function(d) {
+		    	Object.keys(d).forEach( function(i) {
+		    		 if(i == "States" || i == "Value" || i == "Category"){
+		    		 	return
+		    		 	}
+		    		 if(categories.includes(d["Category"])==false){
+		    		 	categories.push(d["Category"])
+		    		 }
+		    		 datalist.push({"State": d["States"], "Value": +d[i], "Year": i, "category": d["Category"]});
+		    	});
+		  	});
+
+            categories.sort();
+
+
+	        //Make a filter button off of the categories
+
+			var filter = d3.select("#filter");
+
+			filter.append("select")
+				  .attr("id","menu")
+				  .selectAll("option")
+				  .data(categories)
+				  .enter()
+				  .append("option")
+				  .attr("value", function(d) {
+				  	return d;
+				  })
+				  .text(function(d) {
+				  	return d; 
+				  }); 
+
+
+		    //Initial graph
+
+		    var initialValue = categories[0]
+
+			var initialHeatMap = datalist.filter(function(d) {
+								 	if(d["category"] == initialValue){
+										return d}
+									});
+
+			var years = d3.map(datalist, function(d){
+							return d.Year;
+						}).keys();
+
+
+			//Create scales
+
+
+			var yscale = d3.scaleBand()
+					   .domain(years)
+					   .range([125, 425])
+					   .padding(.025);
+
+			var xscale = d3.scaleBand()
+					   .domain(initialHeatMap.map(function(d){
+					   	return d.State;
+					   	})
+					   )
+					   .range([100, 900])
+					   .padding(.025);
+
+			var gradient = d3.scaleLinear()
+						   .domain([0, d3.max(initialHeatMap, function(d) {return +d.Value;})])
+						   .range(["#E6E6FA", "#9400D3"]);
+
+			//Create axis
+
+			var xaxis = d3.axisBottom(xscale)
+			   		      .tickSize(0)
+
+			var yaxis = d3.axisLeft(yscale)
+			   		      .tickSize(0)
+
+
+			svg.append("g")
+			   .call(yaxis)
+			   .attr("transform", "translate("+ 100 +",0)");
+
+			svg.append("g")
+			   .call(xaxis)
+			   .attr("transform", "translate(0," + 425 + ")")
+			   .selectAll("text")	
+               .style("text-anchor", "end")
+               .attr("dx", "-.8em")
+               .attr("dy", ".15em")
+               .attr("transform", function(d) {
+                   return "rotate(-65)" 
+               });
+
+            //Create mouse functions for rectangles
+
+			var cursor = svg.append("text")
+						   	.attr("x",100)
+						   	.attr("y",120)
+						   	.attr("text-align","left");
+
+			var mouseon = function(d) {
+							cursor.html(d.Year +", "+ d.State +", "+ d.Value);
+						    };
+
+			var mouseoff = function(d) {
+							 cursor.html("");
+							 };
+
+
+			//Create rectangles
+			svg.selectAll()
+			   .data(initialHeatMap, function(d){
+			   		return d.Year+':'+d.State;
+			   	})
+			  	.enter()
+			  	.append("rect")
+			  	.attr("x", function(d){
+			  		return xscale(d.State)
+			  		;})
+			  	.attr("y", function(d){
+			  		return yscale(d.Year)
+			  		;})
+			  	.attr("rx", 1)
+			  	.attr("ry", 1)
+			  	.attr('width', xscale.bandwidth(xscale.State))
+			  	.attr('height', yscale.bandwidth(yscale.Year))
+			  	.style("fill", function(d){return gradient(+d.Value)})
+			  	.on("mouseover", mouseon)
+			  	.on("mouseleave", mouseoff)
+
+			//Create gradient legend colors
+
+			var gradient1 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient1")
+						       .append("stop")
+			    		   	   .attr("offset", "0%")
+			    		   	   .attr("stop-color", gradient(1));
+
+			var gradient2 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient2").append("stop")
+				    		   .attr("offset", "11%")
+				    		   .attr("stop-color", gradient(2));
+						             
+			var gradient3 = svg.append("defs")
+	   			               .append("linearGradient")
+				               .attr("id", "lingradient3")
+				               .append("stop")
+				    		   .attr("offset", "22%")
+				               .attr("stop-color", gradient(3));
+
+			var gradient4 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient4")
+						       .append("stop")
+			    		       .attr("offset", "33%")
+			    	           .attr("stop-color", gradient(4));
+
+			var gradient5 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient5")
+						       .append("stop")
+			    		       .attr("offset", "44%")
+			   			       .attr("stop-color", gradient(5));
+						             
+			var gradient6 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient6")
+						       .append("stop")
+			    		       .attr("offset", "55%")
+			   		   	       .attr("stop-color", gradient(6));
+
+			var gradient7 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient7").append("stop")
+			    		       .attr("offset", "66%")
+			    		       .attr("stop-color", gradient(7));
+
+			var gradient8 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient8").append("stop")
+			    		       .attr("offset", "77%")
+			    		       .attr("stop-color", gradient(8));
+
+			var gradient9 = svg.append("defs")
+			   			       .append("linearGradient")
+						       .attr("id", "lingradient9")
+						       .append("stop")
+			    		       .attr("offset", "100%")
+			    		       .attr("stop-color", gradient(9));
+
+			svg.append("rect")
+			    .attr("x", 300)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient1)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*1)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient2)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*2)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient3)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*3)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient4)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*4)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient5)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*5)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient6)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*6)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient7)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*7)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient8)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*8)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient9)");
+
+			//Create legend lables
+
+			maxofdata = d3.max(initialHeatMap, function(d){return +d.Value})
+
+   
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text("0");
+
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300+44.445*1)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*1));
+
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300+44.445*2)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*2));
+
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300+44.445*3)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*3));
+
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300+44.445*4)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*4));
+
+			svg.append("text")
+	           .data(initialHeatMap)
+	           .attr("x", 300+44.445*5)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*5));
+
+			svg.append("text")
+		       .data(initialHeatMap)
+		       .attr("x", 300+44.445*6)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*6));
+
+			svg.append("text")
+		       .data(initialHeatMap)
+		       .attr("x", 300+44.445*7)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*7));
+
+			svg.append("text")
+		       .data(initialHeatMap)
+		       .attr("x", 300+44.445*8)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*8));
+
+			svg.append("text")
+		       .data(initialHeatMap)
+		       .attr("x", 300+44.445*9)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*9));
+
+		    svg.append("text")
+		       .attr("x", 300)
+		       .attr("y",85)
+		       .text("Earthquake Counts");
+
+
+		    //Add in dynamic heat map.
+			
+			//Reselect data
+
+			filter.on("change", function(d) {
+				var choice = (d3.select(this)
+								   .select("select")
+								   .property("value"));
+			    update(choice)
+			  });
+
+
+
+			function update(choice) {
+			    var newdata = datalist.filter(function(d) {
+			      if(d["category"] == choice){
+			        return d
+			      }
+			    });
+
+
+			//Remove parts of old graph
+			
+			svg.selectAll("text")
+			   .remove()
+
+			svg.selectAll("g")
+			   .remove()
+
+			svg.selectAll("rect")
+				.remove()
+
+
+			//Title
+
+	        svg.append("text")
+	            .attr("x",500)
+	            .attr("y",15)
+	            .attr("text-anchor","middle")
+	            .text("Visualizing Earthquake Counts by State 20104515 (M3+)");  
+
+			var years = d3.map(datalist, function(d){
+							return d.Year;
+						}).keys();
+
+			//Create scales
+
+			var yscale = d3.scaleBand()
+					   .domain(years)
+					   .range([125, 425])
+					   .padding(.025);
+
+			var xscale = d3.scaleBand()
+					   .domain(newdata.map(function(d){
+					   	return d.State;
+					   	})
+					   )
+					   .range([100, 900])
+					   .padding(.025);
+
+			var gradient = d3.scaleLinear()
+						   .domain([0, d3.max(newdata, function(d) {return +d.Value;})])
+						   .range(["#E6E6FA", "#9400D3"]);
+
+			//Create axis
+
+			var xaxis = d3.axisBottom(xscale)
+			   		      .tickSize(0)
+
+			var yaxis = d3.axisLeft(yscale)
+			   		      .tickSize(0)
+
+
+			svg.append("g")
+			   .call(yaxis)
+			   .attr("transform", "translate("+ 100 +",0)");
+
+			svg.append("g")
+			   .call(xaxis)
+			   .attr("transform", "translate(0," + 425 + ")")
+			   .selectAll("text")	
+               .style("text-anchor", "end")
+               .attr("dx", "-.8em")
+               .attr("dy", ".15em")
+               .attr("transform", function(d) {
+                   return "rotate(-65)" 
+               });
+
+            //Create mouse functions for rectangles
+
+			var cursor = svg.append("text")
+						   	.attr("x",100)
+						   	.attr("y",120)
+						   	.attr("text-align","left");
+
+			var mouseon = function(d) {
+							cursor.html(d.Year +", "+ d.State +", "+ d.Value);
+						    };
+
+			var mouseoff = function(d) {
+							 cursor.html("");
+							 };
+
+
+			//Create rectangles
+			svg.selectAll()
+			   .data(newdata, function(d){
+			   		return d.Year+':'+d.State;
+			   	})
+			  	.enter()
+			  	.append("rect")
+			  	.attr("x", function(d){
+			  		return xscale(d.State)
+			  		;})
+			  	.attr("y", function(d){
+			  		return yscale(d.Year)
+			  		;})
+			  	.attr("rx", 1)
+			  	.attr("ry", 1)
+			  	.attr('width', xscale.bandwidth(xscale.State))
+			  	.attr('height', yscale.bandwidth(yscale.Year))
+			  	.style("fill", function(d){return gradient(+d.Value)})
+			  	.on("mouseover", mouseon)
+			  	.on("mouseleave", mouseoff)			
+
+			svg.append("rect")
+			    .attr("x", 300)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient1)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*1)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient2)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*2)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient3)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*3)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient4)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*4)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient5)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*5)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient6)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*6)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient7)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*7)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient8)");
+
+			svg.append("rect")
+			    .attr("x", 300+44.445*8)
+			    .attr("y", 40)
+			    .attr("width", 44.44)
+			    .attr("height", 30)
+			    .style("fill", "url(#lingradient9)");
+
+			//Create legend lables
+
+			maxofdata = d3.max(newdata, function(d){return +d.Value})
+   
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text("0");
+
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300+44.445*1)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*1));
+
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300+44.445*2)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*2));
+
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300+44.445*3)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*3));
+
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300+44.445*4)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*4));
+
+			svg.append("text")
+	           .data(newdata)
+	           .attr("x", 300+44.445*5)
+	           .attr("y",61)
+	           .attr("width", 300)
+	           .attr("height", 20)
+	           .text(Math.round((maxofdata/9)*5));
+
+			svg.append("text")
+		       .data(newdata)
+		       .attr("x", 300+44.445*6)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*6));
+
+			svg.append("text")
+		       .data(newdata)
+		       .attr("x", 300+44.445*7)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*7));
+
+			svg.append("text")
+		       .data(newdata)
+		       .attr("x", 300+44.445*8)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*8));
+
+			svg.append("text")
+		       .data(newdata)
+		       .attr("x", 300+44.445*9)
+		       .attr("y",61)
+		       .attr("width", 300)
+		       .attr("height", 20)
+		       .text(Math.round((maxofdata/9)*9));
+
+		    svg.append("text")
+		       .attr("x", 300)
+		       .attr("y",85)
+		       .text("Earthquake Counts");
+
+			};
+
+		});  	
+            
+        </script>
+    <div id="filter"></div>   
+    </body>
+</html>

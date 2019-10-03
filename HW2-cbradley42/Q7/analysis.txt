@@ -1,0 +1,20 @@
+1. Ease to develop for developers [40 words]
+	R: R has a larger developer community, so the documentation, examples, and ability to implement packages appear to be more supported than DVC and Tableau. It does require more coding to implement visualizations in R vs Tableau.
+	Tableau: Tableau is a very popular visualization tool, and there is a lot of documentation and examples online that assist developers. There is minimal coding involved in Tableau unless the visualizations get complex. Sharing visualizations is better in Tableau than R.
+	D3: D3 is harder to learn and less popular than R and Tableau, and as such has less development support. However, once a developer learns D3, the complexity, amount of data, and ability to share visualizations far surpass R and Tableau.
+2. Ease to maintain the visualization for developers (e.g., difficulty of the maintenance of the product as the requirements change, the data changes, the hosting platform changes, etc.) [40 words]
+	R: R software and R packages are constantly being updated. Also, it is open source software, so the burden of making sure the visualizations are maintained are on the developer. This creates more work than it would in Tableau.
+	Tableau: A developer must have a license to work in Tableau, so Tableau (the company) puts a lot of effort to make sure that functionality in prior versions are maintained in subsequent versions of Tableau. This make maintenance easier.
+	D3: Because D3 is based on JavaScript and HTML, the only time the visualization would need to be updated is if the web browser requirements changed. This is infrequent and so maintenance in D3 seems to require low effort.
+3. Usability of visualization developed for end users [40 words]
+	R: Most visualizations in R are static. Packages like ggplot2 allow for aesthetically pleasing visualizations, but, in my opinion, are less pleasing than Tableau and D3. Interactive visualizations appear to be sparse in R, thus usability is limited.
+	Tableau: The variety of visualizations in Tableau are great. It also allows drill downs (interactivity) into areas of the data. Tableau does not have the range of possibilities in visualization outcomes that D3 has, so there is a limit on usability.
+	D3: Because visualizations are built from scratch, the ceiling for usability exceeds R and Tableau. The usability is defined by the developer, and not by the predefined parameters of an R package or Tableau template.
+4. Scalability of visualization to “large” datasets [40 words]
+	R: R has a difficult time visualizing a dataset with a million plus rows. The plot window runs out of memory. Also, it is difficult to dynamically filter your dataset in R.
+	Tableau: Tableau does better than R in visualizing large datasets because it allows you to drill down on sections of the data and reveal smaller visualizations. Tableau can handle about 3.5 gigs of data in memory.
+	D3: D3 can visualize very large datasets stored in the cloud. It also allows filtering and interactivity. This is the most scalable option.
+5. System requirements to run the visualization (e.g., browsers, OS, software licensing) for end users [40 words]
+	R: This requires the end user to download R, which is an open source software, from CRAN. Packages must also be downloaded from CRAN. This is a free option for the end user.
+	Tableau: Tableau software must be downloaded by the end user. They must also pay for a license to use the software. Many companies print pdfs of visualizations in Tableau and share static visualizations.
+	D3: This requires an end user to have axis to the latest version of a modern browser (Firefox, Chrome, Safari, etc.) and to have access to the server that is hosting the visualization. 

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>US Earthquakes by Region 2010-2015</title>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/d3-tip.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <style type="text/css">
+
+            .dotsouth{
+                fill: #FFC300;
+                opacity: 1;
+            }
+
+
+            .dotwest{
+                fill: #FF5733;
+                opacity: 1;
+            }
+
+
+            .dotnortheast{
+                fill: #C70039;
+                opacity: 1;
+            }
+
+
+            .dotmidwest{
+                fill: #900C3F;
+                opacity: 1;
+            }
+
+        </style>
+    </head>
+    <body>
+        <script src="../lib/d3.v5.min.js"></script>
+        <script src="../lib/d3-dsv.min.js"></script>
+        <script src="../lib/d3-fetch.min.js"></script>
+        <script src="../lib/d3-scale-chromatic.v1.min.js"></script>
+        <script src="../lib/d3-tip.min.js"></script>
+        <script src="../lib/topojson.v2.min.js"></script>
+        <script type="text/javascript">
+
+             
+        d3.dsv(",","state-year-earthquakes.csv").then(function(data){
+
+            var parser = d3.timeParse("%Y")
+
+            data.forEach(function(d) {
+                d.state = d.state;
+                d.region = d.region;
+                d.count = parseInt(d.count);
+                d.year = d.year;
+            });
+
+            var svg = d3.select("body")
+                        .append("svg")
+                        .attr("width",2000)
+                        .attr("height",5000)
+                        .attr("x",0)
+                        .attr("y",0);
+
+            var dataset = d3.nest()
+                            .key(function(d) { 
+                                return d.region;
+                            })
+                            .key(function(i) {
+                                return i.year;
+                            })
+                            .rollup(function(d) {
+                                return d3.sum(d, function(g) {
+                                                return g.count;
+                                                 });
+                            })
+                            .entries(data);
+
+            var south = Object.values(dataset[0])[1];
+            var west = Object.values(dataset[1])[1];
+            var northeast = Object.values(dataset[2])[1];
+            var midwest = Object.values(dataset[3])[1];
+
+
+
+            var mouseover = function(d, i) {
+
+                d3.select(this).attr("r", 10)
+
+                var regionnew = d3.select(this).attr("id");
+                var datenew1 = xScale.invert(d3.select(this).attr("cx"));
+                var datenew = (datenew1.getFullYear()).toString();
+                console.log(regionnew);
+                console.log(datenew);
+            
+                var newdata1 = data.filter(function(d) {
+                                if(d["region"] == regionnew && d["year"] == datenew) {
+                                    return d
+                                }
+                               });
+
+                var newdata = newdata1.sort(function(a, b){
+                                return b.count - a.count;
+                              });
+
+                console.log(newdata)
+
+                var yScale1 = d3.scaleBand()
+                                .domain(newdata.map(function(d){return d.state}))
+                                .range([100, 400])
+                                .padding(0.1);
+
+
+                var xScale1 = d3.scaleLinear()
+                                .domain([0,d3.max(newdata,function(d){return d.count;})])
+                                .range([200,800]);
+
+
+                var xAxis1 = d3.axisBottom()
+                               .scale(xScale1)
+                               .ticks();
+
+                var yAxis1 = d3.axisLeft()
+                              .scale(yScale1)
+                              .ticks();
+
+
+
+                svg.selectAll(".bar")
+                   .data(newdata)
+                   .enter()
+                   .append("rect")
+                   .attr("id", "bargraph1")
+                   .attr("width", function(d){return xScale1(d.count)-200;})
+                   .attr("y", function(d){return yScale1(d.state);})
+                   .attr("x",1000)
+                   .attr("height", yScale1.bandwidth())
+                   .style("fill","grey");
+
+                svg.append("g")
+                    .attr("id","bargraph2")
+                    .attr("transform","translate("+ 800 +","+ 400 +")")
+                    .call(xAxis1);
+
+                svg.append("g")
+                    .attr("id","bargraph3")
+                    .attr("transform","translate("+ 1000 +",0)")
+                    .call(yAxis1);
+
+
+                svg.append("text")
+                    .attr("id","bargraph4")
+                    .attr("x", 1300)
+                    .attr("y", 50)
+                    .attr("text-anchor", "middle")
+                    .text(regionnew+"ern Region Earthquakes "+datenew);
+
+            };
+
+
+            var mouseleave = function(d) {
+                                d3.select(this).attr("r", 5)
+                                d3.selectAll("#bargraph1").remove()
+                                d3.selectAll("#bargraph2").remove()
+                                d3.selectAll("#bargraph3").remove()
+                                d3.selectAll("#bargraph4").remove()
+                             };
+
+
+            //Settings for line plot
+
+            var xScale = d3.scaleTime()
+                          .domain([d3.min(data,function(d){return parser(d.year);}),d3.max(data,function(d){return parser(d.year);})])
+                          .range([200,800]);
+
+            var xAxis = d3.axisBottom()
+                          .scale(xScale)
+                          .ticks(d3.timeYear.every(1));
+
+
+            var yvalues = [];
+
+            south.forEach(function(d){
+                yvalues.push(d.value)
+            });
+
+            west.forEach(function(d){
+                yvalues.push(d.value)
+            });
+
+            northeast.forEach(function(d){
+                yvalues.push(d.value)
+            });
+
+            midwest.forEach(function(d){
+                yvalues.push(d.value)
+            });
+
+
+            var yScale = d3.scaleLinear()
+                           .domain([d3.max(yvalues),d3.min(yvalues)])
+                           .range([100,400]);
+
+            var yAxis = d3.axisLeft()
+                          .scale(yScale)
+                          .ticks();
+
+            //Line P
+
+            //title
+
+            svg.append("text")
+                .attr("x", 500)
+                .attr("y", 50)
+                .attr("text-anchor", "middle")
+                .text("US Earthquakes by Region 2010-2015");
+
+            
+             //Y Axis and Axis Label
+
+            svg.append("g")
+                .attr("class","axis")
+                .attr("transform","translate("+ 200 +",0)")
+                .call(yAxis);
+
+
+            //X Axis and Axis Label
+
+            svg.append("g")
+                .attr("class","axis")
+                .attr("transform","translate(0,"+ 400 +")")
+                .call(xAxis);
+
+
+            //Lines plot
+
+            var line_all = d3.line()
+                             .x(function(d) {return xScale(parser(d.key)); })
+                             .y(function(d) {return yScale(d.value); });
+
+           svg.append("path")
+              .datum(south)
+              .attr("class", "line")
+              .attr("d", line_all)
+              .style("stroke", "#FFC300")
+              .style("fill", "none");
+
+           svg.selectAll(".dotsouth")
+                .data(south)
+                .enter()
+                .append("circle")
+                .attr("class","dotsouth")
+                .attr("id", "South")
+                .attr("cx",function(d){return xScale(parser(d.key))})
+                .attr("cy",function(d){return yScale(d.value)})
+                .attr("r",5)
+                .attr("transform","translate(0,0)")
+                .on("mouseover", mouseover)
+                .on("mouseleave", mouseleave);
+
+           svg.append("path")
+              .datum(west)
+              .attr("class", "line")
+              .attr("d", line_all)
+              .style("stroke", "#FF5733")
+              .style("fill", "none");
+
+           svg.selectAll(".dotwest")
+                .data(west)
+                .enter()
+                .append("circle")
+                .attr("class","dotwest")
+                .attr("id", "West")
+                .attr("cx",function(d){return xScale(parser(d.key))})
+                .attr("cy",function(d){return yScale(d.value)})
+                .attr("r",5)
+                .attr("transform","translate(0,0)")
+                .on("mouseover", mouseover)
+                .on("mouseleave", mouseleave);
+
+           svg.append("path")
+              .datum(northeast)
+              .attr("class", "line")
+              .attr("d", line_all)
+              .style("stroke", "#C70039")
+              .style("fill", "none");
+
+           svg.selectAll(".dotnortheast")
+                .data(northeast)
+                .enter()
+                .append("circle")
+                .attr("class","dotnortheast")
+                .attr("id", "Northeast")
+                .attr("cx",function(d){return xScale(parser(d.key))})
+                .attr("cy",function(d){return yScale(d.value)})
+                .attr("r",5)
+                .attr("transform","translate(0,0)")
+                .on("mouseover", mouseover)
+                .on("mouseleave", mouseleave);
+
+           svg.append("path")
+              .datum(midwest)
+              .attr("class", "line")
+              .attr("d", line_all)
+              .style("stroke", "#900C3F")
+              .style("fill", "none");
+
+           svg.selectAll(".dotmidwest")
+                .data(midwest)
+                .enter()
+                .append("circle")
+                .attr("class","dotmidwest")
+                .attr("id", "Midwest")
+                .attr("cx",function(d){return xScale(parser(d.key))})
+                .attr("cy",function(d){return yScale(d.value)})
+                .attr("r",5)
+                .attr("transform","translate(0,0)")
+                .on("mouseover", mouseover)
+                .on("mouseleave", mouseleave);
+
+            //legend
+
+            var legendspace = 20
+
+            svg.append('rect')
+                .attr('y',100)
+                .attr('x',810)
+                .attr('width',30)
+                .attr('height',15)
+                .attr('fill','#FFC300');
+
+            svg.append("text")
+                    .attr("x",850)
+                    .attr("y",112)
+                    .attr("text-anchor","left")
+                    .text("South");
+
+            svg.append('rect')
+                .attr('y',100+legendspace)
+                .attr('x',810)
+                .attr('width',30)
+                .attr('height',15)
+                .attr('fill','#FF5733');
+
+            svg.append("text")
+                    .attr("x",850)
+                    .attr("y",112+legendspace)
+                    .attr("text-anchor","left")
+                    .text("West");
+
+            svg.append('rect')
+                .attr('y',100+2*legendspace)
+                .attr('x',810)
+                .attr('width',30)
+                .attr('height',15)
+                .attr('fill','#C70039');
+
+            svg.append("text")
+                    .attr("x",850)
+                    .attr("y",112+2*legendspace)
+                    .attr("text-anchor","left")
+                    .text("Northeast");
+
+            svg.append('rect')
+                .attr('y',100+3*legendspace)
+                .attr('x',810)
+                .attr('width',30)
+                .attr('height',15)
+                .attr('fill','#900C3F');
+
+            svg.append("text")
+                    .attr("x",850)
+                    .attr("y",112+3*legendspace)
+                    .attr("text-anchor","left")
+                    .text("Midwest");
+
+
+        });
+
+        </script>   
+    </body>
+</html>
